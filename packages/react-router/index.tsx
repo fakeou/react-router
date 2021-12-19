@@ -15,6 +15,7 @@ import {
 
 export type { Location, Path, To, NavigationType };
 
+// 用于判断是否在正确的上下文使用某组件， cond为false抛出异常
 function invariant(cond: any, message: string): asserts cond {
   if (!cond) throw new Error(message);
 }
@@ -57,6 +58,15 @@ function warningOnce(key: string, cond: boolean, message: string) {
  * to avoid "tearing" that may occur in a suspense-enabled app if the action
  * and/or location were to be read directly from the history instance.
  */
+/* 
+* 导航器是一个“位置转换器”； 这是你到达不同地点的方式。
+*
+* 每个历史实例都符合 Navigator 界面，但是
+* 区别主要在涉及低级 <Router> API 时有用
+* 必须单独提供位置和导航器才能订购
+* 避免在启用悬念的应用程序中可能发生的“撕裂”，如果操作
+* 和/或 位置将直接从历史实例中读取。
+*/
 export type Navigator = Pick<History, "go" | "push" | "replace" | "createHref">;
 
 interface NavigationContextObject {
@@ -65,6 +75,7 @@ interface NavigationContextObject {
   static: boolean;
 }
 
+// 创建Context，用于跨组件传输数据
 const NavigationContext = React.createContext<NavigationContextObject>(null!);
 
 if (__DEV__) {
@@ -109,7 +120,7 @@ export interface MemoryRouterProps {
 
 /**
  * A <Router> that stores all entries in memory.
- *
+ * 一种在内存中储存全部位置的 <Router> ，可以指定当前url，常用于测试
  * @see https://reactrouter.com/docs/en/v6/api#memoryrouter
  */
 export function MemoryRouter({
@@ -154,7 +165,11 @@ export interface NavigateProps {
  * Note: This API is mostly useful in React.Component subclasses that are not
  * able to use hooks. In functional components, we recommend you use the
  * `useNavigate` hook instead.
+ * 
+ * 更改当前位置。
  *
+ * 注意：这个 API 在 React.Component 子类中非常好用：即类组件
+ * 如果使用Hook。 在函数组件中，我们建议您使用`useNavigate` 钩子代替。
  * @see https://reactrouter.com/docs/en/v6/api#navigate
  */
 export function Navigate({ to, replace, state }: NavigateProps): null {
@@ -163,6 +178,7 @@ export function Navigate({ to, replace, state }: NavigateProps): null {
     // TODO: This error is probably because they somehow have 2 versions of
     // the router loaded. We can help them understand how to avoid that.
     `<Navigate> may be used only in the context of a <Router> component.`
+    /* <Navigate> 只能在 <Router> 组件的上下文中使用 */
   );
 
   warning(
@@ -170,6 +186,9 @@ export function Navigate({ to, replace, state }: NavigateProps): null {
     `<Navigate> must not be used on the initial render in a <StaticRouter>. ` +
       `This is a no-op, but you should modify your code so the <Navigate> is ` +
       `only ever rendered in response to some user interaction or state change.`
+      /* <Navigate> 不能用于 <StaticRouter> 的初始渲染
+        这是一个空操作，但您应该修改您的代码，以便 <Navigate> 是
+        仅在响应某些用户交互或状态更改时才呈现。 */
   );
 
   let navigate = useNavigate();
@@ -503,6 +522,7 @@ export interface NavigateOptions {
  *
  * @see https://reactrouter.com/docs/en/v6/api#usenavigate
  */
+/* 12.15 */
 export function useNavigate(): NavigateFunction {
   invariant(
     useInRouterContext(),
